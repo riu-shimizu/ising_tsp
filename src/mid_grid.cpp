@@ -6,8 +6,8 @@
 #include <tuple>
 
 using namespace std;
-
-vector<pair<int, int>> make_ord(int n) {
+//引数考え中
+vector<pair<int, int>> make_ord(int n,const Problem& prob) {
   assert(n >= 2 && n % 2 == 0);
   vector<pair<int, int>> res;
   rep(i, n/2) {
@@ -23,7 +23,10 @@ CostFunction MidWithGrid::getCostFunction() {
   assert(grid_size % 2 == 0);
   assert(grid_size >= 2);
   const int n = prob.size();
+  //グリッド内の頂点番号
   vector<vector<vector<int>>> grid(grid_size, vector<vector<int>>(grid_size));
+  //グリッド内の頂点の重心
+  vector<vector<pair<double,double>>>point_avg(grid_size,vector<pair<double,double>>(grid_size,{0,0}));
   const double linf = 1e12;
   // 舞台となる長方形領域を取得
   double min_x = linf, max_x = -linf, min_y = linf, max_y = -linf;
@@ -35,13 +38,17 @@ CostFunction MidWithGrid::getCostFunction() {
   }
   // 頂点をグリッドに振り分ける
   const double width = max_x - min_x, height = max_y - min_y;
+  
   rep(i, n) {
     int xid = (prob.points[i].real() - min_x - eps) / width * grid_size;
     int yid = (prob.points[i].real() - min_x - eps) / height * grid_size;
     assert(0 <= xid && xid < grid_size);
     assert(0 <= yid && yid < grid_size);
     grid[yid][xid].push_back(i);
+    point_avg[yid][xid]+=
   }
+  
+  
   // 訪問順序
   vector<pair<int, int>> ord = make_ord(grid_size);
   // iステップ目に訪れることができる頂点集合
