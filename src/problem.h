@@ -20,6 +20,8 @@ public:
   Answer(const Problem& prob, const std::vector<int>& order);
   void output(std::ostream& os, bool is_detail) const;
   bool verify() const;
+  //追加
+  std::vector<int> order_is() const;
 };
 
 #endif
