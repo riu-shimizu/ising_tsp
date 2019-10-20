@@ -7,9 +7,11 @@
 #include <tuple>
 
 using namespace std;
-//変更中
+//訪問順をIsingSolverで決める
+
 vector<pair<int, int>> make_ord(int n,const Problem& prob) {
   Mid mid(prob);
+  //solverのパラメータは初期設定?のまま
   const CostFunction cf = mid.getCostFunction();
   const double initial_active_ratio = min(1., 1. / sqrt(double(cf.size())));
   IsingSolver solver(cf);
@@ -18,8 +20,9 @@ vector<pair<int, int>> make_ord(int n,const Problem& prob) {
   {
     solver.step(); 
   }
-  Answer ans = mid.getAnswerFromSpin(solver.getOptimalSpin);
+  Answer ans = mid.getAnswerFromSpin(solver.getOptimalSpin());
   vector<int> order = ans.order_is();
+  //二次元グリッドの訪問順に戻す
   vector<pair<int, int>> res;
   for (int i:order){
     int column = i/n;
@@ -38,7 +41,7 @@ CostFunction MidWithGrid::getCostFunction() {
   //グリッド内の頂点
   vector<vector<vector<int>>> grid(grid_size, vector<vector<int>>(grid_size));
   //グリッド内の頂点の重心
-  vector<vector<complex<double>>> grid_avg(grid_size,vector<complex<double>>(grid_size,(0.0f,0.0f)));
+  vector<vector<complex<double>>> grid_avg(grid_size,vector<complex<double>>(grid_size));
   const double linf = 1e12;
   // 舞台となる長方形領域を取得
   double min_x = linf, max_x = -linf, min_y = linf, max_y = -linf;
@@ -52,7 +55,7 @@ CostFunction MidWithGrid::getCostFunction() {
   const double width = max_x - min_x, height = max_y - min_y;
   rep(i, n) {
     int xid = (prob.points[i].real() - min_x - eps) / width * grid_size;
-    int yid = (prob.points[i].imag() - min_x - eps) / height * grid_size;
+    int yid = (prob.points[i].imag() - min_y - eps) / height * grid_size;
     assert(0 <= xid && xid < grid_size);
     assert(0 <= yid && yid < grid_size);
     grid[yid][xid].push_back(i);
@@ -63,7 +66,8 @@ CostFunction MidWithGrid::getCostFunction() {
   vector<complex<double>> points_avg(grid_size*grid_size);
   rep(column,grid_size){
     rep(row,grid_size){
-      grid_avg[column][row]/=grid[column][row].size;
+      grid_avg[column][row]/=grid[column][row].size();
+      //Problemの引数にするために一次元にする
       points_avg[grid_size*column+row]=grid_avg[column][row];
     }
   }
