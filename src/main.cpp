@@ -20,11 +20,11 @@ void run(const cmdline::parser& parser) {
     exit(1);
   }
   // Mid mid(Problem::fromIstream(ifs));
-  Mid mid = parser.get<int>("grid") == 1 ? Mid(Problem::fromIstream(ifs))
-    : MidWithGrid(Problem::fromIstream(ifs), parser.get<int>("grid"));
+  Mid *mid = parser.get<int>("grid") == 1 ? new Mid(Problem::fromIstream(ifs))
+    : new MidWithGrid(Problem::fromIstream(ifs), parser.get<int>("grid"));
   // solvers[0] is the main solver
   // solvers[1..] is the sub solvers with different cool coefficient
-  const CostFunction cf = mid.getCostFunction();
+  const CostFunction cf = mid->getCostFunction();
   const int swidth = parser.get<int>("swidth");
   const double base_cool = parser.get<double>("cool");
   const double initial_active_ratio = min(1., 1. / sqrt(double(cf.size())));
@@ -62,7 +62,7 @@ void run(const cmdline::parser& parser) {
     cout << "energy: " << main_solver.getCurrentEnergy() << endl;
     if (is_detail) cout << "spin: " << main_solver.getCurrentSpin() << endl;
     cout << "flip: " << main_solver.getActiveNodeCount() << " / " << main_solver.size() << endl;
-    Answer ans = mid.getAnswerFromSpin(main_solver.getCurrentSpin());
+    Answer ans = mid->getAnswerFromSpin(main_solver.getCurrentSpin());
     ans.output(cout, is_detail);
     cout << "is_answer: " << boolalpha << ans.verify() << endl;
     cout << endl;
@@ -70,7 +70,7 @@ void run(const cmdline::parser& parser) {
   cout << "[Answer]" << endl;
   cout << "energy: " << main_solver.getOptimalEnergy() << endl;
   if (is_detail) cout << "spin: " << main_solver.getOptimalSpin() << endl;
-  Answer ans = mid.getAnswerFromSpin(main_solver.getOptimalSpin());
+  Answer ans = mid->getAnswerFromSpin(main_solver.getOptimalSpin());
   ans.output(cout, true);
   cout << "is_answer: " << boolalpha << ans.verify() << endl;
 }
