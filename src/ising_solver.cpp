@@ -53,6 +53,7 @@ void IsingSolver::init(const IsingSolver::InitMode mode, const double cool_coe, 
 void IsingSolver::randomFlip() {
   vector<int> node_ids = random_selector.select(getActiveNodeCount(), rnd);
   for (auto&& node_id : node_ids) {
+    // current_spin[node_id] *= -1;
     current_spin[node_id] = 1;
     if (current_spin[node_id] > 0) {
       for (auto&& e : cf.J2[node_id]) {
