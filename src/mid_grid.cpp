@@ -1,4 +1,5 @@
 #include "ising_solver.h"
+#include "mid.h"
 #include "mid_grid.h"
 #include "mylib.h"
 #include <vector>
@@ -6,15 +7,29 @@
 #include <tuple>
 
 using namespace std;
+//訪問順をIsingSolverで決める
 
-vector<pair<int, int>> make_ord(int n) {
-  assert(n >= 2 && n % 2 == 0);
-  vector<pair<int, int>> res;
-  rep(i, n/2) {
-    rep(x, 1, n) res.emplace_back(x, i*2);
-    rrep(x, 1, n) res.emplace_back(x, i*2+1);
+vector<pair<int, int>> make_ord(int n,const Problem& prob) {
+  Mid mid(prob);
+  //solverのパラメータは初期設定?のまま
+  const CostFunction cf = mid.getCostFunction();
+  const double initial_active_ratio = min(1., 1. / sqrt(double(cf.size())));
+  IsingSolver solver(cf);
+  solver.init(IsingSolver::InitMode::Random,0.999 , 0.3, initial_active_ratio);
+  while (solver.getStep() < solver.getTotalStep()+10)
+  {
+    solver.step(); 
   }
-  rrep(y, n) res.emplace_back(0, y);
+  Answer ans = mid.getAnswerFromSpin(solver.getOptimalSpin());
+  vector<int> order = ans.order_is();
+  //二次元グリッドの訪問順に戻す
+  vector<pair<int, int>> res;
+  for (int i:order){
+    int column = i/n;
+    int row = i%n;
+    res.push_back({column,row});
+  }
+
   return res;
 }
 MidWithGrid::MidWithGrid(const Problem& prob, int grid_size) : Mid(prob), grid_size(grid_size) {}
@@ -23,7 +38,10 @@ CostFunction MidWithGrid::getCostFunction() {
   assert(grid_size % 2 == 0);
   assert(grid_size >= 2);
   const int n = prob.size();
+  //グリッド内の頂点
   vector<vector<vector<int>>> grid(grid_size, vector<vector<int>>(grid_size));
+  //グリッド内の頂点の重心
+  vector<vector<complex<double>>> grid_avg(grid_size,vector<complex<double>>(grid_size));
   const double linf = 1e12;
   // 舞台となる長方形領域を取得
   double min_x = linf, max_x = -linf, min_y = linf, max_y = -linf;
@@ -31,19 +49,35 @@ CostFunction MidWithGrid::getCostFunction() {
     min_x = min(min_x, prob.points[i].real());
     max_x = max(max_x, prob.points[i].real());
     min_y = min(min_y, prob.points[i].imag());
-    max_y = min(max_y, prob.points[i].imag());
+    max_y = max(max_y, prob.points[i].imag());
   }
   // 頂点をグリッドに振り分ける
   const double width = max_x - min_x, height = max_y - min_y;
   rep(i, n) {
     int xid = (prob.points[i].real() - min_x - eps) / width * grid_size;
-    int yid = (prob.points[i].real() - min_x - eps) / height * grid_size;
+    int yid = (prob.points[i].imag() - min_y - eps) / height * grid_size;
     assert(0 <= xid && xid < grid_size);
     assert(0 <= yid && yid < grid_size);
     grid[yid][xid].push_back(i);
+
+    grid_avg[yid][xid]+=(prob.points[i]);
   }
+  //重心の座標を計算する
+  vector<complex<double>> points_avg(grid_size*grid_size);
+  rep(column,grid_size){
+    rep(row,grid_size){
+      grid_avg[column][row]/=grid[column][row].size();
+      //Problemの引数にするために一次元にする
+      points_avg[grid_size*column+row]=grid_avg[column][row];
+    }
+  }
+  //各グリッドに含まれる頂点の重心
+  Problem prob_avg(move(points_avg));
+  
   // 訪問順序
-  vector<pair<int, int>> ord = make_ord(grid_size);
+  vector<pair<int, int>> ord = make_ord(grid_size,prob_avg);
+
+  /*変更ここまで*/
   // iステップ目に訪れることができる頂点集合
   vector<vector<int>> step_to_nodes(n), node_to_nodes(n);
   ising_node.clear();

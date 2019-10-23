@@ -3,5 +3,6 @@ in.txt
 *.log
 *.o
 *.out
+.vscode
 ising
 !output/*.out

@@ -33,7 +33,7 @@ public:
   enum InitMode {
     Negative, Positive, Random
   };
-  IsingSolver(const CostFunction& cf);
+  IsingSolver(const CostFunction& cf); //コンストラクタ
   Weight getCurrentEnergy() const;
   Weight getOptimalEnergy() const; // ただし現在の目的関数で計算
   Weight calcEnergy(const std::vector<int>& spin) const;

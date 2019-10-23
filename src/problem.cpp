@@ -50,3 +50,6 @@ void Answer::output(ostream& os, bool is_detail) const {
   if (is_detail) os << endl;
   os << "total distance: " << sum << endl;
 }
+std::vector<int> Answer::order_is() const{
+  return order;
+}
